@@ -1,0 +1,32 @@
+#!/bin/sh
+
+set -e
+
+log() {
+    echo $* >&2
+}
+
+fatal() {
+    log $*
+    exit 1
+}
+
+ROOT_DIR=$(readlink -f $(dirname $0)/..)
+
+test -f ${ROOT_DIR}/Mask_RCNN/mask_rcnn_coco.h5 || {
+    log "Cannot find Mask-R-CNN weights, downloading"
+    curl -L https://github.com/matterport/Mask_RCNN/releases/download/v2.0/mask_rcnn_coco.h5 -o Mask_RCNN/mask_rcnn_coco.h5
+}
+
+test -f ${ROOT_DIR}/venv/bin/python || {
+    log "Virtual environment does not exist, creating"
+    python3 -m venv ${ROOT_DIR}/venv
+}
+
+PIP=${ROOT_DIR}/venv/bin/pip
+${PIP} install -U pip
+${PIP} install -r requirements.txt
+
+git submodule init
+git submodule update
+${PIP} install -e Mask_RCNN

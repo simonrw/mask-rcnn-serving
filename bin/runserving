@@ -1,0 +1,25 @@
+#!/bin/sh
+
+set -e
+
+log() {
+    echo $* >&2
+}
+
+fatal() {
+    log $*
+    exit 1
+}
+
+ROOT_DIR=$(readlink -f $(dirname $0)/..)
+CONTAINER_NAME=tensorflow-maskrcnn-serving
+IMAGE_NAME=tensorflow/serving:1.13.0-gpu
+
+docker rm -f ${CONTAINER_NAME} 2>/dev/null || true
+
+docker run --rm --runtime nvidia \
+    -it -p 8500:8500 -p 8501:8501 \
+    --mount type=bind,source=${ROOT_DIR}/models/maskrcnn,target=/models/maskrcnn \
+    -e MODEL_NAME=maskrcnn \
+    -d \
+    ${IMAGE_NAME}
