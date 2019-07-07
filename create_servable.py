@@ -39,9 +39,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "-o", "--output-dir", required=False, default=default_output_dir
     )
+    parser.add_argument("--model-version", required=False, default="1")
     args = parser.parse_args()
 
-    model = MaskRCNN(mode="inference", config=MyConfig(), model_dir=args.output_dir)
+    model_dir = os.path.join(args.output_dir, args.model_version)
+
+    model = MaskRCNN(mode="inference", config=MyConfig(), model_dir=model_dir)
     model.load_weights("Mask_RCNN/mask_rcnn_coco.h5", by_name=True)
 
-    save_model(model, args.output_dir)
+    save_model(model, model_dir)
