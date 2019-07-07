@@ -30,3 +30,6 @@ ${PIP} install -r requirements.txt
 git submodule init
 git submodule update
 ${PIP} install -e Mask_RCNN
+
+# Generate the protobuf files
+bash ./bin/build
