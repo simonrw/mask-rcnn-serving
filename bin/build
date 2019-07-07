@@ -69,3 +69,6 @@ PROTO_SRC=$(find protos | grep "\.proto$")
 for p in $PROTO_SRC; do  
   python -m grpc.tools.protoc -I protos --python_out=$PROTOC_OUT --grpc_python_out=$PROTOC_OUT $p
 done
+
+# Create python packages from the protos dir
+find protos -type d -exec touch {}/__init__.py \;
