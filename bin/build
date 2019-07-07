@@ -1,0 +1,71 @@
+#!/bin/bash
+
+set -e
+
+ensure_dir() {
+    dir=$1
+    test -d $dir || {
+        mkdir -p $dir
+    }
+}
+
+# Create the protos directory structure
+ensure_dir protos/tensorflow_serving/apis
+ensure_dir protos/tensorflow/core/framework
+ensure_dir protos/tensorflow/core/example
+ensure_dir protos/tensorflow/core/protobuf
+
+
+# Fetch the protos
+TENSORFLOW_SERVING_PROTOS="tensorflow_serving/apis/model.proto \
+    tensorflow_serving/apis/predict.proto \
+    tensorflow_serving/apis/prediction_service.proto \
+    tensorflow_serving/apis/classification.proto \
+    tensorflow_serving/apis/get_model_metadata.proto \
+    tensorflow_serving/apis/inference.proto \
+    tensorflow_serving/apis/predict.proto \
+    tensorflow_serving/apis/regression.proto \
+    tensorflow_serving/apis/input.proto"
+
+TENSORFLOW_PROTOS="tensorflow/core/example/example.proto \
+    tensorflow/core/example/feature.proto \
+    tensorflow/core/protobuf/meta_graph.proto \
+    tensorflow/core/protobuf/saved_object_graph.proto \
+    tensorflow/core/protobuf/trackable_object_graph.proto \
+    tensorflow/core/protobuf/saver.proto \
+    tensorflow/core/protobuf/struct.proto \
+    tensorflow/core/framework/resource_handle.proto \
+    tensorflow/core/framework/tensor_shape.proto \
+    tensorflow/core/framework/variable.proto \
+    tensorflow/core/framework/tensor.proto \
+    tensorflow/core/framework/graph.proto \
+    tensorflow/core/framework/node_def.proto \
+    tensorflow/core/framework/function.proto \
+    tensorflow/core/framework/versions.proto \
+    tensorflow/core/framework/attr_value.proto \
+    tensorflow/core/framework/op_def.proto \
+    tensorflow/core/framework/types.proto"
+
+for proto in $TENSORFLOW_SERVING_PROTOS; do
+    test -f protos/${proto} || {
+        echo "Proto $proto missing"
+        curl -L https://raw.githubusercontent.com/tensorflow/serving/master/${proto} -o protos/${proto}
+    }
+done
+
+for proto in $TENSORFLOW_PROTOS; do
+    test -f protos/${proto} || {
+        echo "Proto $proto missing"
+        curl -L https://raw.githubusercontent.com/tensorflow/serving/master/${proto} -o protos/${proto}
+        curl -L https://raw.githubusercontent.com/tensorflow/tensorflow/master/${proto} -o protos/${proto}
+    }
+done
+
+
+# Build the protobuf files
+PROTOC_OUT=protos
+PROTO_SRC=$(find protos | grep "\.proto$")  
+
+for p in $PROTO_SRC; do  
+  python -m grpc.tools.protoc -I protos --python_out=$PROTOC_OUT --grpc_python_out=$PROTOC_OUT $p
+done
